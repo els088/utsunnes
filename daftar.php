@@ -1,3 +1,43 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['registrations']) || !is_array($_SESSION['registrations'])) {
+    $_SESSION['registrations'] = [];
+}
+$is_submitted = isset($_POST['submit']);
+$last_registration = end($_SESSION['registrations']);
+$umur_target = 0;
+const MIN_UMUR = 10;
+$is_age_error = false;
+
+if ($is_submitted) {
+    $umur_raw = $_POST['umur'] ?? '';
+
+    if (empty($umur_raw) || !ctype_digit($umur_raw) || (int)$umur_raw < MIN_UMUR) {
+        $is_age_error = true;
+        
+    } else {
+        $umur_post = (int)$umur_raw;
+        
+        $new_registration = [
+            "nama_depan" => $_POST['nama_depan'] ?? 'N/A',
+            "nama_belakang" => $_POST['nama_belakang'] ?? 'N/A',
+            "umur" => $umur_post, 
+            "asal_kota" => $_POST['asal_kota'] ?? 'N/A',
+        ];
+
+        $_SESSION['registrations'][] = $new_registration;
+        $umur_target = $umur_post;
+        $data_diulang = $new_registration; 
+    }
+
+} elseif ($last_registration) {
+    $umur_target = (int)($last_registration['umur'] ?? 0);
+    $data_diulang = $last_registration;
+}
+
+?>
+
 <html>
     <head>
         <title>::Data Registrasi::</title>
@@ -79,14 +119,45 @@
         <div class="container">
             <h1>Data Registrasi User</h1>
             
-            <?php if (isset($_POST['submit'])): ?>
-                <div class="success-message">
-                    Registrasi Berhasil!
-                </div>
+            <?php if ($is_age_error): ?>
                 
+                <div class="age-error-box">
+                    <h3>❌ ERROR!</h3>
+                    <p style="font-size: 1.2em; font-weight: bold;">Umur harus minimal <?php echo MIN_UMUR; ?> tahun!</p>
+                </div>
                 <div class="back-button">
                     <a href="index.html">Kembali ke Form Registrasi</a>
                 </div>
+
+            <?php elseif ($umur_target >= MIN_UMUR): ?>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Depan</th>
+                            <th>Nama Belakang</th>
+                            <th>Umur</th>
+                            <th>Asal Kota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php for($i = 2; $i <= $umur_target; $i += 2): ?>
+                        <?php if ($i !=4 && $i !=8):?>
+                        <tr>
+                            <td><?php echo $i; ?></td>
+                            <td><?php echo htmlspecialchars($data_diulang['nama_depan']); ?></td>
+                            <td><?php echo htmlspecialchars($data_diulang['nama_belakang']); ?></td>
+                            <td><?php echo htmlspecialchars($data_diulang['umur']); ?></td>
+                            <td><?php echo htmlspecialchars($data_diulang['asal_kota']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                    </tbody>
+                </table>
+                <div class="back-button">
+                    <a href="index.html">Kembali ke Form Registrasi</a>
+                </div>
+
             <?php else: ?>
                 <div style="text-align: center; color: #dc3545; padding: 20px;">
                     <h3>Error: Data tidak ditemukan</h3>
